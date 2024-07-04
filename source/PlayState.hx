@@ -36,6 +36,8 @@ class PlayState extends FlxState
 		addToStage(new FlxSprite(-1091.45, -785.15, AssetPaths.wall__png));
 		addToStage(new FlxSprite(-876.45, 705.15, AssetPaths.floor__png));
 		addToStage(new FlxSprite(1166.45, 125.15, AssetPaths.sign_yesterday__png));
+		addToStage(new FlxSprite(1516.45, 105.15, AssetPaths.drinks__png));
+		addToStage(new FlxSprite(1916.45, 105.15, AssetPaths.drinks__png));
 		addToStage(new FlxSprite(916.45, 316.15, AssetPaths.reg__png), 0.98);
 		addToStage(new FlxSprite(-635.1, 29.6, AssetPaths.shelf_w_shit__png), 0.6);
 		addToStage(new FlxSprite(1516.45, 348.15, AssetPaths.reg__png), 1.2);
