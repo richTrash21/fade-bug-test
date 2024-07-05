@@ -18,15 +18,22 @@ class PlayState extends FlxState
 	private static final blendModes:Array<BlendMode> = [
 		null, ADD, ALPHA, DARKEN, DIFFERENCE, ERASE, HARDLIGHT, INVERT, LAYER, LIGHTEN, MULTIPLY, NORMAL, OVERLAY, SCREEN, SHADER, SUBTRACT
 	];
+	private static final fadeColors:Array<FlxColor> = [
+		FlxColor.WHITE, FlxColor.GRAY, FlxColor.BLACK, FlxColor.GREEN, FlxColor.LIME, FlxColor.YELLOW, FlxColor.ORANGE, FlxColor.RED, FlxColor.PURPLE,
+		FlxColor.BLUE, FlxColor.BROWN, FlxColor.PINK, FlxColor.MAGENTA, FlxColor.CYAN
+	];
 
 	private var stage:FlxTypedGroup<FlxSprite>;
 	private var light:FlxSprite;
 	private var cameraHUD:FlxCamera;
 
 	private var lightInfoText:FlxText;
-	private var fadeStatusText:FlxText;
+	private var fadeInfoText:FlxText;
 
-	private var curBlendMode:Int;
+	private var curBlendMode:Int = 0;
+	private var curFadeColor:Int = 0;
+
+	var _resetTimer:Float = 0.0;
 
 	override public function create():Void
 	{
@@ -74,6 +81,7 @@ class PlayState extends FlxState
 		text += "\nUse \"LEFT\" and \"RIGHT\" to change light sprite blend mode";
 		text += "\nUse \"UP\" and \"DOWN\" to reorder light sprite";
 		text += "\nUse \"Z\" to switch light sprite visibility";
+		text += "\nUse \"Q\" and \"E\" to change fade fill color";
 		text += "\nUse \"SPACE\" to start fade out";
 		text += "\nHold \"R\" to reset the state";
 		text += "\n\nRender method: " + FlxG.renderMethod;
@@ -84,20 +92,19 @@ class PlayState extends FlxState
 		addToHUD(lightInfoText);
 		updateLightInfoText();
 
-		fadeStatusText = createFormatedText(TEXT_PADDING, "Fade Status Text");
-		fadeStatusText.y = FlxG.height - fadeStatusText.height - TEXT_PADDING;
-		addToHUD(fadeStatusText);
+		fadeInfoText = createFormatedText(TEXT_PADDING, "Fade Status Text");
+		fadeInfoText.y = FlxG.height - fadeInfoText.height - TEXT_PADDING;
+		addToHUD(fadeInfoText);
 
 		// accurate fade status information
-		FlxG.signals.postUpdate.add(updateFadeStatusText);
+		FlxG.signals.postUpdate.add(updateFadeInfoText);
 
 		/**	end hud setup	**/
 	}
 
-	var _resetTimer = 0.0;
-
 	override public function update(elapsed:Float):Void
 	{
+		// state reset timer
 		if (FlxG.keys.pressed.R)
 		{
 			_resetTimer += elapsed;
@@ -135,6 +142,7 @@ class PlayState extends FlxState
 			// trace(FlxG.camera.scroll);
 		}
 
+		// change light sprite blend mode
 		final ARROW_LEFT = FlxG.keys.justPressed.LEFT;
 		final ARROW_RIGHT = FlxG.keys.justPressed.RIGHT;
 		if (ARROW_LEFT || ARROW_RIGHT && !(ARROW_LEFT && ARROW_RIGHT))
@@ -165,12 +173,29 @@ class PlayState extends FlxState
 			updateLightInfoText();
 		}
 
+		// switch light sprite visibility
 		if (FlxG.keys.justPressed.Z)
 			light.visible = !light.visible;
 
-		// start fade after pressing SPACE
+		// change fade fill color
+		final COLOR_LEFT = FlxG.keys.justPressed.Q;
+		final COLOR_RIGHT = FlxG.keys.justPressed.E;
+		if (COLOR_LEFT || COLOR_RIGHT && !(COLOR_LEFT && COLOR_RIGHT))
+		{
+			if (COLOR_RIGHT)
+				curFadeColor++;
+			else
+				curFadeColor--;
+
+			curFadeColor = FlxMath.wrap(curFadeColor, 0, fadeColors.length - 1);
+		}
+
+		// start fade
 		if (FlxG.keys.justPressed.SPACE)
-			FlxG.camera.fade(FlxColor.BLACK, 1.0, false, () -> new FlxTimer().start(0.5, (_) -> FlxG.camera.fade(FlxColor.BLACK, 0.0, true)));
+		{
+			final color = fadeColors[curFadeColor];
+			FlxG.camera.fade(color, 1.0, false, () -> new FlxTimer().start(0.5, (_) -> FlxG.camera.fade(color, 0.0, true)));
+		}
 	}
 
 	private function addToStage(spr:FlxSprite, scale = 1.0):FlxSprite
@@ -226,12 +251,38 @@ class PlayState extends FlxState
 	}
 
 	@:access(flixel.FlxCamera)
-	private function updateFadeStatusText():Void
+	private function updateFadeInfoText():Void
 	{
 		final isFadeActive = FlxG.camera._fxFadeAlpha > 0.0;
 		var fadeProgress = FlxMath.roundDecimal(FlxG.camera._fxFadeAlpha, 4);
 		if (FlxG.camera._fxFadeIn)
 			fadeProgress = 1.0 - fadeProgress;
-		fadeStatusText.text = "Fade status: " + (isFadeActive ? 'ACTIVE [$fadeProgress]' : "INACTIVE");
+
+		final colorIndex = (isFadeActive ? fadeColors.indexOf(FlxG.camera._fxFadeColor) : curFadeColor);
+		var text = "Color: " + getColorName(fadeColors[colorIndex]) + ' [$colorIndex]';
+		text += ", Status: " + (isFadeActive ? 'active [$fadeProgress]' : "inactive");
+		fadeInfoText.text = 'Fade info: ($text)';
+	}
+
+	private function getColorName(color:FlxColor):String
+	{
+		return switch (color)
+		{
+			case FlxColor.WHITE: "white";
+			case FlxColor.GRAY: "gray";
+			case FlxColor.BLACK: "black";
+			case FlxColor.GREEN: "green";
+			case FlxColor.LIME: "lime";
+			case FlxColor.YELLOW: "yellow";
+			case FlxColor.ORANGE: "orange";
+			case FlxColor.RED: "red";
+			case FlxColor.PURPLE: "purple";
+			case FlxColor.BLUE: "blue";
+			case FlxColor.BROWN: "brown";
+			case FlxColor.PINK: "pink";
+			case FlxColor.MAGENTA: "magenta";
+			case FlxColor.CYAN: "cyan";
+			default: "unknown";
+		}
 	}
 }
