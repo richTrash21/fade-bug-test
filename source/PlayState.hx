@@ -41,6 +41,7 @@ class PlayState extends FlxState
 
 		/**	stage setup	**/
 
+		FlxG.cameras.reset(new CameraWithFixedFill());
 		FlxG.camera.zoom = 0.55;
 		FlxG.camera.bgColor = FlxColor.fromHSL(0, 0, 0.26);
 
@@ -83,6 +84,7 @@ class PlayState extends FlxState
 		text += "\nUse \"Z\" to switch light sprite visibility";
 		text += "\nUse \"Q\" and \"E\" to change fade fill color";
 		text += "\nUse \"SPACE\" to start fade out";
+		text += "\nUse \"X\" to try fill fix";
 		text += "\nHold \"R\" to reset the state";
 		text += "\n\nRender method: " + FlxG.renderMethod;
 		addToHUD(createFormatedText(TEXT_PADDING, TEXT_PADDING, text));
@@ -190,6 +192,12 @@ class PlayState extends FlxState
 			curFadeColor = FlxMath.wrap(curFadeColor, 0, fadeColors.length - 1);
 		}
 
+		if (FlxG.keys.justPressed.X)
+		{
+			final camera = cast(FlxG.camera, CameraWithFixedFill);
+			camera.fillFix = !camera.fillFix;
+		}
+
 		// start fade
 		if (FlxG.keys.justPressed.SPACE)
 		{
@@ -260,6 +268,7 @@ class PlayState extends FlxState
 
 		final colorIndex = (isFadeActive ? fadeColors.indexOf(FlxG.camera._fxFadeColor) : curFadeColor);
 		var text = "Color: " + getColorName(fadeColors[colorIndex]) + ' [$colorIndex]';
+		text += ", Fill fix: " + cast(FlxG.camera, CameraWithFixedFill).fillFix;
 		text += ", Status: " + (isFadeActive ? 'active [$fadeProgress]' : "inactive");
 		fadeInfoText.text = 'Fade info: ($text)';
 	}
