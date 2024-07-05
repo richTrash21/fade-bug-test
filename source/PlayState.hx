@@ -67,8 +67,6 @@ class PlayState extends FlxState
 		light.blend = ADD;
 		curBlendMode = blendModes.indexOf(light.blend);
 
-		sortStage();
-
 		/**	end stage setup	**/
 		/**	hud setup	**/
 
@@ -79,7 +77,6 @@ class PlayState extends FlxState
 		final TEXT_PADDING = 10.0;
 		var text = "Use \"WASD\" to move the camera (\"SHIFT\" to move 4 times faster)";
 		text += "\nUse \"LEFT\" and \"RIGHT\" to change light sprite blend mode";
-		text += "\nUse \"UP\" and \"DOWN\" to reorder light sprite";
 		text += "\nUse \"Z\" to switch light sprite visibility";
 		text += "\nUse \"Q\" and \"E\" to change fade fill color";
 		text += "\nUse \"SPACE\" to start fade out";
@@ -157,22 +154,6 @@ class PlayState extends FlxState
 			updateLightInfoText();
 		}
 
-		// move light sprite around the stage
-		final ARROW_UP = FlxG.keys.justPressed.UP;
-		final ARROW_DOWN = FlxG.keys.justPressed.DOWN;
-		if (ARROW_UP || ARROW_DOWN && !(ARROW_UP && ARROW_DOWN))
-		{
-			if (ARROW_UP)
-				light.ID++;
-			else
-				light.ID--;
-
-			// wrap new id around the stage length
-			light.ID = FlxMath.wrap(light.ID, 0, stage.length - 1);
-			sortStage();
-			updateLightInfoText();
-		}
-
 		// switch light sprite visibility
 		if (FlxG.keys.justPressed.Z)
 			light.visible = !light.visible;
@@ -200,8 +181,6 @@ class PlayState extends FlxState
 
 	private function addToStage(spr:FlxSprite, scale = 1.0):FlxSprite
 	{
-		spr.ID = stage.length;
-		// trace(spr.ID);
 		spr.active = false;
 		spr.scale.scale(scale * 1.3);
 		// spr.updateHitbox();
@@ -215,28 +194,6 @@ class PlayState extends FlxState
 		return add(basic);
 	}
 
-	private function sortStage():Void
-	{
-		// trace([for (basic in stage.members) basic.ID]);
-		stage.sort(sortByID);
-
-		// for some reason sometimes array.sort() doesn't always work propertly
-		// so i had to add this manual sorting in case of regular sorting failture
-		final index = stage.members.indexOf(light);
-		if (light.ID != index)
-		{
-			stage.members[index] = stage.members[light.ID];
-			stage.members[light.ID] = light;
-		}
-		// trace([for (basic in stage.members) basic.ID]);
-	}
-
-	private function sortByID(order:Int, basic1:FlxBasic, basic2:FlxBasic):Int
-	{
-		// trace(basic1.ID, basic2.ID);
-		return FlxSort.byValues(order, basic1.ID, basic2.ID);
-	}
-
 	private function createFormatedText(x = 0.0, ?y = 0.0, text = ""):FlxText
 	{
 		return new FlxText(x, y, 0.0, text, 16).setBorderStyle(OUTLINE, FlxColor.BLACK, 2);
@@ -244,9 +201,7 @@ class PlayState extends FlxState
 
 	private function updateLightInfoText():Void
 	{
-		var text = "Index: " + stage.members.indexOf(light);
-		// text += ", ID: " + light.ID;
-		text += ", Blend: " + light.blend + ' [$curBlendMode]';
+		var text = "Blend: " + light.blend + ' [$curBlendMode]';
 		lightInfoText.text = 'Light info: ($text)';
 	}
 
