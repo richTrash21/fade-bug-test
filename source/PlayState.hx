@@ -11,15 +11,22 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.util.FlxSort;
 import flixel.util.FlxTimer;
+import openfl.display.BlendMode;
 
 class PlayState extends FlxState
 {
+	private static final blendModes:Array<BlendMode> = [
+		null, ADD, ALPHA, DARKEN, DIFFERENCE, ERASE, HARDLIGHT, INVERT, LAYER, LIGHTEN, MULTIPLY, NORMAL, OVERLAY, SCREEN, SHADER, SUBTRACT
+	];
+
 	private var stage:FlxTypedGroup<FlxSprite>;
 	private var light:FlxSprite;
 	private var cameraHUD:FlxCamera;
 
-	private var lightIndexText:FlxText;
+	private var lightInfoText:FlxText;
 	private var fadeStatusText:FlxText;
+
+	private var curBlendMode:Int;
 
 	override public function create():Void
 	{
@@ -51,6 +58,7 @@ class PlayState extends FlxState
 		addToStage(new FlxSprite(300, -400, AssetPaths.lamp_bloom__png));
 		light = addToStage(new FlxSprite(110, -300, AssetPaths.light__png));
 		light.blend = ADD;
+		curBlendMode = blendModes.indexOf(light.blend);
 
 		sortStage();
 
@@ -63,6 +71,7 @@ class PlayState extends FlxState
 
 		final TEXT_PADDING = 10.0;
 		var text = "Use \"WASD\" to move the camera (\"SHIFT\" to move 4 times faster)";
+		text += "\nUse \"LEFT\" and \"RIGHT\" to change light sprite blend mode";
 		text += "\nUse \"UP\" and \"DOWN\" to reorder light sprite";
 		text += "\nUse \"Z\" to switch light sprite visibility";
 		text += "\nUse \"SPACE\" to start fade out";
@@ -70,10 +79,10 @@ class PlayState extends FlxState
 		text += "\n\nRender method: " + FlxG.renderMethod;
 		addToHUD(createFormatedText(TEXT_PADDING, TEXT_PADDING, text));
 
-		lightIndexText = createFormatedText(TEXT_PADDING);
-		lightIndexText.y = FlxG.height - lightIndexText.height * 2 - TEXT_PADDING;
-		addToHUD(lightIndexText);
-		updateLightIndexText();
+		lightInfoText = createFormatedText(TEXT_PADDING);
+		lightInfoText.y = FlxG.height - lightInfoText.height * 2 - TEXT_PADDING;
+		addToHUD(lightInfoText);
+		updateLightInfoText();
 
 		fadeStatusText = createFormatedText(TEXT_PADDING, "Fade Status Text");
 		fadeStatusText.y = FlxG.height - fadeStatusText.height - TEXT_PADDING;
@@ -103,10 +112,6 @@ class PlayState extends FlxState
 
 		super.update(elapsed);
 
-		// start fade after pressing SPACE
-		if (FlxG.keys.justPressed.SPACE)
-			FlxG.camera.fade(FlxColor.BLACK, 1.0, false, () -> new FlxTimer().start(0.5, (_) -> FlxG.camera.fade(FlxColor.BLACK, 0.0, true)));
-
 		// camera movement control
 		final LEFT = FlxG.keys.pressed.A;
 		final RIGHT = FlxG.keys.pressed.D;
@@ -130,6 +135,20 @@ class PlayState extends FlxState
 			// trace(FlxG.camera.scroll);
 		}
 
+		final ARROW_LEFT = FlxG.keys.justPressed.LEFT;
+		final ARROW_RIGHT = FlxG.keys.justPressed.RIGHT;
+		if (ARROW_LEFT || ARROW_RIGHT && !(ARROW_LEFT && ARROW_RIGHT))
+		{
+			if (ARROW_RIGHT)
+				curBlendMode++;
+			else
+				curBlendMode--;
+
+			curBlendMode = FlxMath.wrap(curBlendMode, 0, blendModes.length - 1);
+			light.blend = blendModes[curBlendMode];
+			updateLightInfoText();
+		}
+
 		// move light sprite around the stage
 		final ARROW_UP = FlxG.keys.justPressed.UP;
 		final ARROW_DOWN = FlxG.keys.justPressed.DOWN;
@@ -143,11 +162,15 @@ class PlayState extends FlxState
 			// wrap new id around the stage length
 			light.ID = FlxMath.wrap(light.ID, 0, stage.length - 1);
 			sortStage();
-			updateLightIndexText();
+			updateLightInfoText();
 		}
 
 		if (FlxG.keys.justPressed.Z)
 			light.visible = !light.visible;
+
+		// start fade after pressing SPACE
+		if (FlxG.keys.justPressed.SPACE)
+			FlxG.camera.fade(FlxColor.BLACK, 1.0, false, () -> new FlxTimer().start(0.5, (_) -> FlxG.camera.fade(FlxColor.BLACK, 0.0, true)));
 	}
 
 	private function addToStage(spr:FlxSprite, scale = 1.0):FlxSprite
@@ -194,9 +217,12 @@ class PlayState extends FlxState
 		return new FlxText(x, y, 0.0, text, 16).setBorderStyle(OUTLINE, FlxColor.BLACK, 2);
 	}
 
-	private function updateLightIndexText():Void
+	private function updateLightInfoText():Void
 	{
-		lightIndexText.text = "Light index: " + stage.members.indexOf(light) + ", Light ID: " + light.ID;
+		var text = "Index: " + stage.members.indexOf(light);
+		// text += ", ID: " + light.ID;
+		text += ", Blend: " + light.blend + ' [$curBlendMode]';
+		lightInfoText.text = 'Light info: ($text)';
 	}
 
 	@:access(flixel.FlxCamera)
