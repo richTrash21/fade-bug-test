@@ -16,7 +16,7 @@ import openfl.display.BlendMode;
 class PlayState extends FlxState
 {
 	private static final blendModes:Array<BlendMode> = [
-		null, ADD, ALPHA, DARKEN, DIFFERENCE, ERASE, HARDLIGHT, INVERT, LAYER, LIGHTEN, MULTIPLY, NORMAL, OVERLAY, SCREEN, SHADER, SUBTRACT
+		NORMAL, ADD, ALPHA, DARKEN, DIFFERENCE, ERASE, HARDLIGHT, INVERT, LAYER, LIGHTEN, MULTIPLY, OVERLAY, SCREEN, SHADER, SUBTRACT
 	];
 	private static final fadeColors:Array<FlxColor> = [
 		FlxColor.WHITE, FlxColor.GRAY, FlxColor.BLACK, FlxColor.GREEN, FlxColor.LIME, FlxColor.YELLOW, FlxColor.ORANGE, FlxColor.RED, FlxColor.PURPLE,
